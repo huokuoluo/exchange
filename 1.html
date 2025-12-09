@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <!-- 响应式设计的关键：视口元标签 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>loading</title>
+    <style>
+        /* 基础样式重置 */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        /* Iframe 样式：使其填充整个屏幕 */
+        iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* 介绍页面的容器 */
+        .intro-container {
+            /* 使用 margin 实现居中，5vh 提供上下边距，auto 实现水平居中 */
+            margin: 5vh auto;
+            padding: 40px;
+            max-width: 600px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.8s ease-in-out;
+            /* 添加 box-sizing 以便 padding 不会影响总宽度 */
+            box-sizing: border-box;
+        }
+
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .intro-container h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .intro-container .tagline {
+            color: #7f8c8d;
+            font-size: 1.1em;
+            margin-bottom: 30px;
+        }
+
+        .intro-container .description {
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        .intro-container .contact-info {
+            font-size: 0.9em;
+            color: #95a5a6;
+        }
+
+        .intro-container .contact-info a {
+            color: #3498db;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .intro-container .contact-info a:hover {
+            color: #2980b9;
+            text-decoration: underline;
+        }
+
+        /* 媒体查询：适配小屏幕设备 (如手机) */
+        @media (max-width: 768px) {
+            .intro-container {
+                /* 在小屏幕上减少外边距和内边距 */
+                margin: 2vh auto;
+                padding: 20px;
+                width: 90%; /* 确保在小屏幕上宽度合适 */
+            }
+        }
+    </style>
+</head>
+<body>
+    <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+    <script>
+        // --- 调试代码：初始化 VConsole 并打印确认信息 ---
+        var vConsole = new VConsole();
+        console.log('[调试] VConsole 已初始化，您可以在右下角打开调试面板。');
+
+        (function() {
+            // --- 第一步：定义接口URL ---
+            // 风格1: RESTful 路径 (已注释)
+            // const restfulApiBaseUrl = 'http://easy.sub.kolo.run/api/resolve/';
+            // 风格2: 查询字符串 (当前使用)
+            const queryStringApiUrl = 'http://easy.sub.kolo.run/api/resolve.php';
+
+            // --- 辅助函数：显示工作室介绍页面 ---
+            function showIntroPage(title, description) {
+                // --- 调试代码：在显示介绍页时，同时将信息打印到控制台 ---
+                console.log(`[调试] 调用 showIntroPage。标题: "${title}", 描述: "${description}"`);
+                document.body.innerHTML = `
+                    <div class="intro-container">
+                        <h1>${title}</h1>
+                        <p class="tagline">创意与技术的完美融合</p>
+                        <p class="description">
+                            ${description}
+                        </p>
+                        <div class="contact-info">
+                            如有疑问，请联系我们：<a href="mailto:contact@example.com">contact@example.com</a>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // --- 辅助函数：加载iframe ---
+            function loadIframe(url) {
+                // --- 调试代码：在加载 iframe 时打印目标 URL ---
+                console.log(`[调试] 调用 loadIframe，目标 URL: ${url}`);
+                var iframe = document.createElement('iframe');
+                iframe.src = url;
+                document.body.appendChild(iframe);
+            }
+
+            // --- 主逻辑 ---
+            async function main() {
+                // --- 调试代码：记录主逻辑开始执行 ---
+                console.log('[调试] 主逻辑 main() 开始执行。');
+
+                // 获取URL中的参数
+                var urlParams = new URLSearchParams(window.location.search);
+                var param = urlParams.get('r');
+
+                // --- 调试代码：打印当前URL和解析出的参数 ---
+                console.log(`[调试] 当前页面URL: ${window.location.href}`);
+                console.log(`[调试] 从URL中解析出的参数 r: ${param}`);
+
+                if (!param) {
+                    // --- 调试代码：记录因无参数而显示介绍页 ---
+                    console.log('[调试] URL中未找到参数 r，将显示默认介绍页面。');
+                    showIntroPage('欢迎来到我们的工作室', '我们是一个充满激情的团队，专注于打造卓越的数字体验。');
+                    return;
+                }
+
+                // --- 定义一个通用的请求处理函数 ---
+                async function tryFetch(url) {
+                    console.log(`[调试] 尝试请求: ${url}`);
+                    const response = await fetch(url, { method: 'GET' });
+                    console.log(`[调试] API响应状态码: ${response.status} (${response.statusText})`);
+                    if (!response.ok) {
+                        // 抛出错误，让上层 catch 捕获
+                        throw new Error(`请求失败，状态码: ${response.status}`);
+                    }
+                    return await response.json();
+                }
+
+                /* --- 注释掉的 RESTful 风格请求逻辑 ---
+                try {
+                    // --- 第二步：优先尝试 RESTful 风格 ---
+                    const restfulUrl = `${restfulApiBaseUrl}${param}/`;
+                    let data = await tryFetch(restfulUrl);
+                    console.log('[调试] RESTful风格请求成功，返回数据:', data);
+
+                    // --- 获取成功，加载iframe ---
+                    if (data.success && data.url) {
+                        loadIframe(data.url);
+                    } else {
+                        // 后端逻辑失败
+                        const errorMessage = data.error || data.message || '无法验证您的访问权限。';
+                        console.log(`[调试] 后端返回失败。错误信息: "${errorMessage}"`);
+                        showIntroPage('访问受限', `很抱歉，${errorMessage}`);
+                    }
+
+                } catch (firstError) {
+                    // --- RESTful 请求失败，记录错误并尝试备用方案 ---
+                    console.warn(`[调试] RESTful风格请求失败: ${firstError.message}。将尝试查询字符串风格作为备用。`);
+                    
+                    try {
+                        // --- 第三步：备用方案，尝试查询字符串风格 ---
+                        const queryStringParams = new URLSearchParams({ code: param });
+                        const queryStringFinalUrl = `${queryStringApiUrl}?${queryStringParams.toString()}`;
+                        let data = await tryFetch(queryStringFinalUrl);
+                        console.log('[调试] 查询字符串风格请求成功，返回数据:', data);
+
+                        // --- 获取成功，加载iframe ---
+                        if (data.success && data.url) {
+                            loadIframe(data.url);
+                        } else {
+                            const errorMessage = data.error || data.message || '无法验证您的访问权限。';
+                            console.log(`[调试] 后端返回失败。错误信息: "${errorMessage}"`);
+                            showIntroPage('访问受限', `很抱歉，${errorMessage}`);
+                        }
+
+                    } catch (secondError) {
+                        // --- 两种请求方式都失败了 ---
+                        console.error('[调试] 查询字符串风格请求也失败了:', secondError);
+                        showIntroPage('发生错误', '抱歉，无法通过两种方式获取目标地址。请检查参数或稍后再试。');
+                    }
+                }
+                --- 注释结束 --- */
+
+                // --- 仅使用查询字符串风格的逻辑 ---
+                try {
+                    // --- 直接尝试查询字符串风格 ---
+                    const queryStringParams = new URLSearchParams({ code: param });
+                    const queryStringFinalUrl = `${queryStringApiUrl}?${queryStringParams.toString()}`;
+                    let data = await tryFetch(queryStringFinalUrl);
+                    console.log('[调试] 查询字符串风格请求成功，返回数据:', data);
+
+                    // --- 获取成功，加载iframe ---
+                    if (data.success && data.url) {
+                        loadIframe(data.url);
+                    } else {
+                        const errorMessage = data.error || data.message || '无法验证您的访问权限。';
+                        console.log(`[调试] 后端返回失败。错误信息: "${errorMessage}"`);
+                        showIntroPage('访问受限', `很抱歉，${errorMessage}`);
+                    }
+
+                } catch (error) {
+                    // --- 请求失败了 ---
+                    console.error('[调试] 查询字符串风格请求失败:', error);
+                    showIntroPage('发生错误', '抱歉，无法获取目标地址。请检查参数或稍后再试。');
+                }
+            }
+
+            // 执行主逻辑
+            main();
+        })();
+    </script>
+</body>
+</html>
